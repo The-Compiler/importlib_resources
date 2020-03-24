@@ -1,6 +1,8 @@
 from __future__ import absolute_import
 
+import io
 import abc
+import itertools
 
 from ._compat import ABC, FileNotFoundError
 
@@ -143,6 +145,10 @@ class SimpleReader(ABC):
         Obtain a File-like for a named resource.
         """
 
+    @property
+    def name(self):
+        return self.package.split('.')[-1]
+
 
 class TraversableResources(ResourceReader):
     @abc.abstractmethod
@@ -160,3 +166,54 @@ class TraversableResources(ResourceReader):
 
     def contents(self):
         return (item.name for item in self.files().iterdir())
+
+
+class ResourceHandle(Traversable):
+    def __init__(self, reader, name):
+        self.reader = reader
+        self.name = name
+
+    def is_file(self):
+        return True
+
+    def is_dir(self):
+        return False
+
+    def open(self, mode='r', *args, **kwargs):
+        stream = self.reader.open_binary(self.name)
+        if 'b' not in mode:
+            stream = io.TextIOWrapper(*args, **kwargs)
+        return stream
+
+
+class ResourceContainer(Traversable):
+    def __init__(self, reader: SimpleReader):
+        self.reader = reader
+
+    def is_dir(self):
+        return True
+
+    def is_file(self):
+        return False
+
+    def iterdir(self):
+        files = (
+            ResourceHandle(self, name)
+            for name in self.resources
+            )
+        dirs = map(ResourceContainer, self.child_readers())
+        return itertools.chain(files, dirs)
+
+    def open(self, *args, **kwargs):
+        raise IsADirectoryError()
+
+    def joinpath(self, name):
+        return next(
+            traversable
+            for traversable in self.iterdir()
+            if traversable.name == name)
+
+
+class TraversableReader(TraversableResources, SimpleReader):
+    def files(self):
+        return ResourceContainer(self)
