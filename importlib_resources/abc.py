@@ -8,7 +8,7 @@ from ._compat import ABC, FileNotFoundError
 
 # Use mypy's comment syntax for Python 2 compatibility
 try:
-    from typing import BinaryIO, Iterable, Text
+    from typing import BinaryIO, Iterable, Text, List
 except ImportError:
     pass
 
@@ -129,14 +129,14 @@ class SimpleReader(ABC):
         """
 
     @abc.abstractmethod
-    def child_readers(self) -> ['SimpleReader']:
+    def child_readers(self) -> List['SimpleReader']:
         """
         Obtain an iterable of ResourceReader for available
         child virtual packages of this one.
         """
 
     @abc.abstractmethod
-    def resources(self) -> [str]:
+    def resources(self) -> List[str]:
         """
         Obtain available named resources for this virtual package.
         """
