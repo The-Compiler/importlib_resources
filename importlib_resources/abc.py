@@ -1,8 +1,8 @@
-from __future__ import absolute_import
-
 import abc
 
-from ._compat import ABC, FileNotFoundError, runtime_checkable, Protocol
+from typing import Protocol
+
+from ._compat import runtime_checkable
 
 # Use mypy's comment syntax for Python 2 compatibility
 try:
@@ -11,7 +11,7 @@ except ImportError:
     pass
 
 
-class ResourceReader(ABC):
+class ResourceReader(metaclass=abc.ABCMeta):
     """Abstract base class for loaders to provide resource reading support."""
 
     @abc.abstractmethod
